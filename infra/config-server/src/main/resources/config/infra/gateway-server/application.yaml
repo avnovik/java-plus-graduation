@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    gateway:
+      # Gateway для своей работы должен использовать Discovery Service.
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: main_service_route
+          uri: lb://main-service
+          filters:
+            - name: Retry
+              args:
+                retries: 5
+                methods: GET,POST,PUT,PATCH,DELETE
+                exceptions:
+                  - java.net.ConnectException
+                  - io.netty.channel.AbstractChannel$AnnotatedConnectException
+          predicates:
+            - Path=/**
+
+server:
+  port: 8080
+
+logging:
+  level:
+    # 1-2 строки на каждый входящий HTTP-запрос в Gateway (метод + путь + статус).
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
