@@ -66,7 +66,7 @@ public class StatsClient {
 
         builder.queryParam("unique", paramDto.isUniques());
 
-        URI uri = makeUri(builder.build().toUriString());
+        URI uri = makeUri(builder.encode().build().toUriString());
 
         ResponseEntity<List<ViewStatsDto>> response = restTemplate.exchange(
                 uri,
