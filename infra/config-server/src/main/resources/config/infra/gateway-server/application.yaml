@@ -10,14 +10,6 @@ spring:
       routes:
         - id: main_service_route
           uri: lb://main-service
-          filters:
-            - name: Retry
-              args:
-                retries: 5
-                methods: GET,POST,PUT,PATCH,DELETE
-                exceptions:
-                  - java.net.ConnectException
-                  - io.netty.channel.AbstractChannel$AnnotatedConnectException
           predicates:
             - Path=/**
 
