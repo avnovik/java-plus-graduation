@@ -16,7 +16,7 @@ spring:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:6542/ewmdb
     username: ewmdb
-    password: ewmdb
+    password: ${EWM_DB_PASSWORD:ewmdb}
 
 logging:
   level:

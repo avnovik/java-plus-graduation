@@ -17,7 +17,7 @@ spring:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:6541/statsdb
     username: statsdb
-    password: statsdb
+    password: ${STATS_DB_PASSWORD:statsdb}
 
 logging:
   level:

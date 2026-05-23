@@ -7,7 +7,7 @@ services:
     environment:
       - POSTGRES_DB=statsdb
       - POSTGRES_USER=statsdb
-      - POSTGRES_PASSWORD=statsdb
+      - POSTGRES_PASSWORD=${STATS_DB_PASSWORD:-statsdb}
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -22,7 +22,7 @@ services:
     environment:
       - POSTGRES_DB=ewmdb
       - POSTGRES_USER=ewmdb
-      - POSTGRES_PASSWORD=ewmdb
+      - POSTGRES_PASSWORD=${EWM_DB_PASSWORD:-ewmdb}
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
