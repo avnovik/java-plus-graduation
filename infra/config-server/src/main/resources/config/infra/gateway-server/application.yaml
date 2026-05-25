@@ -8,6 +8,12 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/users/**
+
+
         - id: main_service_route
           uri: lb://main-service
           predicates:

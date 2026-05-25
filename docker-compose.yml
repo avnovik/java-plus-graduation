@@ -28,3 +28,25 @@ services:
       timeout: 5s
       interval: 5s
       retries: 10
+
+  db-init:
+    image: postgres:16.1
+    container_name: db-init
+    depends_on:
+      - ewm-db
+    environment:
+      PGPASSWORD: ${EWM_DB_PASSWORD:-ewmdb}
+    entrypoint:
+      - bash
+      - -c
+      - >
+        set -e;
+        until pg_isready -h ewm-db -U ewmdb -d postgres; do
+          echo "waiting for postgres...";
+          sleep 1;
+        done;
+        psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database userdb owner ewmdb";
+        psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database eventdb owner ewmdb";
+        psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database requestdb owner ewmdb";
+        psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database commentdb owner ewmdb";
+    restart: "no"
