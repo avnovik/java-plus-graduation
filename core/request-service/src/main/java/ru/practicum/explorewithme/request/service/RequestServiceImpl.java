@@ -87,7 +87,6 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
-        // TODO: заменить на вызов user-service (internal API) и проверить что пользователь существует
 
         List<Request> requests = requestRepository.findAllByRequesterId(userId);
 

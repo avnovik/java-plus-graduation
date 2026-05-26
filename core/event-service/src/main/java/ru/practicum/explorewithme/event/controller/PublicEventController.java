@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicEventController {
 
-    private static final String APP_NAME = "ewm-main-service";
+    private static final String APP_NAME = "ewm-service";
 
     private final EventService eventService;
     private final StatsClient statsClient;
