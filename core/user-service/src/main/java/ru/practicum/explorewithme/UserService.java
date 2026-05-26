@@ -6,8 +6,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication(scanBasePackages = {"ru.practicum"})
 @EnableFeignClients(basePackages = {"ru.practicum"})
-public class UserServiceApplication {
+public class UserService {
     public static void main(String[] args) {
-        SpringApplication.run(UserServiceApplication.class, args);
+        SpringApplication.run(UserService.class, args);
     }
 }
