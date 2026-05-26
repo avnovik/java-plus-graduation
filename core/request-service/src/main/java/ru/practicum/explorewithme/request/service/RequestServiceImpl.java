@@ -1,12 +1,14 @@
 package ru.practicum.explorewithme.request.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explorewithme.dto.error.ConflictException;
 import ru.practicum.explorewithme.dto.error.NotFoundException;
 import ru.practicum.explorewithme.event.client.EventClient;
 import ru.practicum.explorewithme.event.dto.EventForRequestDto;
+import ru.practicum.explorewithme.event.model.EventState;
 import ru.practicum.explorewithme.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.explorewithme.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.explorewithme.request.dto.ParticipationRequestDto;
@@ -52,7 +54,7 @@ public class RequestServiceImpl implements RequestService {
         }
 
         // Событие должно быть опубликовано
-        if (!"PUBLISHED".equals(event.getState())) {
+        if (!EventState.PUBLISHED.name().equals(event.getState())) {
             throw new ConflictException("Событие не опубликовано");
         }
 
@@ -81,7 +83,11 @@ public class RequestServiceImpl implements RequestService {
             request.setStatus(RequestStatus.PENDING);
         }
 
-        return RequestMapper.toDto(requestRepository.save(request));
+        try {
+            return RequestMapper.toDto(requestRepository.save(request));
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("Заявка уже существует");
+        }
     }
 
     @Override

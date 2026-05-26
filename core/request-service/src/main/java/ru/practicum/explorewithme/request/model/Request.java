@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,7 +18,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "requests")
+@Table(
+        name = "requests",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_request_requester_event", columnNames = {"requester_id", "event_id"})
+        }
+)
 public class Request {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

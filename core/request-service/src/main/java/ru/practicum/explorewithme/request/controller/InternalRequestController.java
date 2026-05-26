@@ -6,8 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explorewithme.request.dto.EventConfirmedCountDto;
-import ru.practicum.explorewithme.request.model.RequestStatus;
-import ru.practicum.explorewithme.request.repository.RequestRepository;
+import ru.practicum.explorewithme.request.service.InternalRequestService;
 
 import java.util.List;
 
@@ -16,13 +15,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InternalRequestController {
 
-    private final RequestRepository requestRepository;
+    private final InternalRequestService internalRequestService;
 
     @GetMapping("/confirmed-count")
     public List<EventConfirmedCountDto> getConfirmedCounts(@RequestParam List<Long> eventIds) {
-        return requestRepository.countByEventIdsAndStatus(eventIds, RequestStatus.CONFIRMED)
-                .stream()
-                .map(r -> new EventConfirmedCountDto(r.getEventId(), r.getCnt()))
-                .toList();
+        return internalRequestService.getConfirmedCounts(eventIds);
     }
 }

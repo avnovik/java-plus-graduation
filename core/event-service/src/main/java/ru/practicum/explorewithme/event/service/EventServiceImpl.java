@@ -462,14 +462,6 @@ public class EventServiceImpl implements EventService {
         return new NotFoundException("Event with id=" + eventId + " was not found");
     }
 
-    private NotFoundException categoryNotFound(Long categoryId) {
-        return new NotFoundException("Category with id=" + categoryId + " was not found");
-    }
-
-    private NotFoundException userNotFound(Long userId) {
-        return new NotFoundException("User with id=" + userId + " was not found");
-    }
-
     private CategoryDto loadCategory(Long categoryId) {
         if (categoryId == null) {
             return null;

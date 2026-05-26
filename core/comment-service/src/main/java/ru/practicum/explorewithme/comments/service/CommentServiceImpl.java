@@ -16,6 +16,7 @@ import ru.practicum.explorewithme.dto.error.ConditionsNotMetException;
 import ru.practicum.explorewithme.dto.error.NotFoundException;
 import ru.practicum.explorewithme.event.client.EventClient;
 import ru.practicum.explorewithme.event.dto.EventForRequestDto;
+import ru.practicum.explorewithme.event.model.EventState;
 import ru.practicum.explorewithme.user.client.UserClient;
 
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto addComment(Long userId, Long eventId, ShortCommentDto dto) {
         validateUserExists(userId);
         EventForRequestDto event = getEvent(eventId);
-        if (!"PUBLISHED".equals(event.getState())) {
+        if (!EventState.PUBLISHED.name().equals(event.getState())) {
             throw new ConditionsNotMetException("Event must be published to add comments");
         }
         Comment comment = CommentMapper.toComment(dto, userId, eventId);

@@ -3,7 +3,6 @@ package ru.practicum.explorewithme.category.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explorewithme.category.dto.CategoryDto;
@@ -14,7 +13,6 @@ import ru.practicum.explorewithme.category.service.CategoryService;
 @RestController
 @RequestMapping("/admin/categories")
 @RequiredArgsConstructor
-
 public class AdminCategoryController {
 
     private final CategoryService categoryService;
