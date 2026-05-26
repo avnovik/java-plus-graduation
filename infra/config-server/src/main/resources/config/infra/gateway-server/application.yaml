@@ -6,18 +6,35 @@ spring:
       # Gateway для своей работы должен использовать Discovery Service.
       discovery:
         locator:
-          enabled: true
+          # Автоматическую генерацию маршрутов из Discovery отключаем,
+          # маршруты задаём явно в spring.cloud.gateway.routes.
+          enabled: false
       routes:
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/admin/users/**
 
-
-        - id: main_service_route
-          uri: lb://main-service
+        - id: request-service
+          uri: lb://request-service
           predicates:
-            - Path=/**
+            - Path=/users/*/requests/**,/users/*/events/*/requests/**
+
+        - id: event-service
+          uri: lb://event-service
+          predicates:
+            - Path=/events/**,/admin/events/**,/users/*/events/**,/compilations/**,/admin/compilations/**
+
+        - id: category-service
+          uri: lb://category-service
+          predicates:
+            - Path=/categories/**,/admin/categories/**
+
+        - id: comment-service
+          uri: lb://comment-service
+          predicates:
+            - Path=/admin/comments/**,/events/*/comments/**,/comments/**,/users/*/comments/**,/users/*/events/*/comments/**
+
 
 server:
   port: 8080
