@@ -49,4 +49,5 @@ services:
         psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database eventdb owner ewmdb";
         psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database requestdb owner ewmdb";
         psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database commentdb owner ewmdb";
+        psql -h ewm-db -U ewmdb -d postgres -v ON_ERROR_STOP=1 -c "create database categorydb owner ewmdb";
     restart: "no"

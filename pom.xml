@@ -30,6 +30,7 @@
         <module>stats</module>
         <module>core</module>
         <module>infra</module>
+        <module>core/category-service</module>
     </modules>
 
     <dependencyManagement>
