@@ -175,8 +175,13 @@ public class CompilationServiceImpl implements CompilationService {
             return Collections.emptyMap();
         }
 
-        List<EventConfirmedCountDto> counts = Optional.ofNullable(requestClient.getConfirmedCounts(eventIds))
-                .orElse(Collections.emptyList());
+        List<EventConfirmedCountDto> counts;
+        try {
+            counts = Optional.ofNullable(requestClient.getConfirmedCounts(eventIds))
+                    .orElse(Collections.emptyList());
+        } catch (Exception ex) {
+            return Collections.emptyMap();
+        }
 
         return counts.stream()
                 .filter(c -> c.getEventId() != null)

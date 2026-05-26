@@ -267,7 +267,13 @@ public class EventServiceImpl implements EventService {
             return Collections.emptyMap();
         }
 
-        List<EventConfirmedCountDto> rows = requestClient.getConfirmedCounts(eventIds);
+        List<EventConfirmedCountDto> rows;
+        try {
+            rows = requestClient.getConfirmedCounts(eventIds);
+        } catch (Exception ex) {
+            log.warn("Request-service call failed; returning confirmedRequests=0. Message: {}", ex.getMessage());
+            return Collections.emptyMap();
+        }
 
         Map<Long, Long> result = new HashMap<>();
         if (rows == null) {
