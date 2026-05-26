@@ -1,0 +1,31 @@
+server:
+  port: 0
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: never
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6542/categorydb
+    username: ewmdb
+    password: ${EWM_DB_PASSWORD:ewmdb}
+
+logging:
+  level:
+    ru.practicum: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
