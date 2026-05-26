@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import ru.practicum.explorewithme.user.dto.UserDto;
 
-@FeignClient(name = "user-service", path = "/internal/users")
+@FeignClient(name = "user-service", contextId = "userClient", path = "/internal/users")
 public interface UserClient {
 
     @GetMapping("/{userId}")

@@ -1,5 +1,6 @@
 package ru.practicum.explorewithme.dto.error;
 
+import feign.FeignException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,6 +57,28 @@ public class ErrorHandler {
         return buildErrorResponse(HttpStatus.CONFLICT,
                 "Integrity constraint has been violated.",
                 ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage());
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ApiError> handleFeign(FeignException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.status());
+        if (status == null) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        String reason;
+        if (status == HttpStatus.NOT_FOUND) {
+            reason = "The required object was not found.";
+        } else if (status == HttpStatus.BAD_REQUEST) {
+            reason = "Incorrectly made request.";
+        } else if (status == HttpStatus.CONFLICT) {
+            reason = "For the requested operation the conditions are not met.";
+        } else {
+            reason = "Unexpected error.";
+        }
+
+        log.warn("Ошибка при межсервисном вызове: status={}, message={}", status, ex.getMessage());
+        return buildErrorResponse(status, reason, ex.getMessage());
     }
 
     @ExceptionHandler(Throwable.class)
