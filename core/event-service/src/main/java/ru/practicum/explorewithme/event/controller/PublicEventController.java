@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicEventController {
 
-    @Value("${spring.application.name}")
-    private String appName;
+    private static final String APP_NAME = "ewm-service";
 
     private final EventService eventService;
     private final StatsClient statsClient;
@@ -65,7 +63,7 @@ public class PublicEventController {
         }
         EndPointHitDto hit = new EndPointHitDto(
                 null,
-                appName,
+                APP_NAME,
                 request.getRequestURI(),
                 request.getRemoteAddr(),
                 LocalDateTime.now()

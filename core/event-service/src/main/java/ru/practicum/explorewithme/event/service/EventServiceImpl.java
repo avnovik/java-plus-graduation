@@ -15,7 +15,6 @@ import ru.practicum.explorewithme.category.client.CategoryClient;
 import ru.practicum.explorewithme.category.dto.CategoryDto;
 import ru.practicum.explorewithme.common.paging.OffsetBasedPageRequest;
 import ru.practicum.explorewithme.dto.error.ConditionsNotMetException;
-import ru.practicum.explorewithme.dto.error.DependencyUnavailableException;
 import ru.practicum.explorewithme.dto.error.NotFoundException;
 import ru.practicum.explorewithme.dto.error.ValidationException;
 import ru.practicum.explorewithme.event.dto.*;
@@ -272,8 +271,8 @@ public class EventServiceImpl implements EventService {
         try {
             rows = requestClient.getConfirmedCounts(eventIds);
         } catch (Exception ex) {
-            log.warn("Request-service call failed; confirmedRequests is unavailable. Message: {}", ex.getMessage());
-            throw new DependencyUnavailableException("Request-service is unavailable");
+            log.warn("Request-service call failed; returning confirmedRequests=0. Message: {}", ex.getMessage());
+            return Collections.emptyMap();
         }
 
         Map<Long, Long> result = new HashMap<>();
