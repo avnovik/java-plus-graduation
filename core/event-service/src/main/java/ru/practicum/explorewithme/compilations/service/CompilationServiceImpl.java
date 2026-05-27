@@ -2,6 +2,7 @@ package ru.practicum.explorewithme.compilations.service;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,6 +25,7 @@ import ru.practicum.explorewithme.event.model.Event;
 import ru.practicum.explorewithme.event.repository.EventRepository;
 import ru.practicum.explorewithme.request.client.RequestClient;
 import ru.practicum.explorewithme.request.dto.EventConfirmedCountDto;
+import ru.practicum.explorewithme.dto.error.DependencyUnavailableException;
 import ru.practicum.explorewithme.dto.error.NotFoundException;
 import ru.practicum.explorewithme.user.client.UserClient;
 import ru.practicum.explorewithme.user.dto.UserDto;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CompilationServiceImpl implements CompilationService {
@@ -180,7 +183,8 @@ public class CompilationServiceImpl implements CompilationService {
             counts = Optional.ofNullable(requestClient.getConfirmedCounts(eventIds))
                     .orElse(Collections.emptyList());
         } catch (Exception ex) {
-            return Collections.emptyMap();
+            log.warn("Request-service call failed; confirmedRequests is unavailable. Message: {}", ex.getMessage());
+            throw new DependencyUnavailableException("Request-service is unavailable");
         }
 
         return counts.stream()
