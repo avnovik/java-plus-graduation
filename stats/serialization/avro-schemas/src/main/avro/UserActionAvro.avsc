@@ -1,0 +1,35 @@
+{
+  "namespace": "ru.practicum.ewm.stats.avro",
+  "type": "record",
+  "name": "UserActionAvro",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "long",
+      "doc": "Identifier of the user who performed the action."
+    },
+    {
+      "name": "eventId",
+      "type": "long",
+      "doc": "Identifier of the event associated with the action."
+    },
+    {
+      "name": "actionType",
+      "type": {
+        "namespace": "ru.practicum.ewm.stats.avro",
+        "type": "enum",
+        "name": "ActionTypeAvro",
+        "symbols": ["VIEW", "REGISTER", "LIKE"]
+      },
+      "doc": "The type of action performed."
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "The timestamp of when the action occurred, in milliseconds since the Unix epoch."
+    }
+  ]
+}
