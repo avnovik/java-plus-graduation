@@ -26,19 +26,25 @@ public class EventSimilaritySender {
                 similarity
         );
         try {
-            var metadata = producer.send(record).get();
-            producer.flush();
-            log.info("Event similarity sent to topic {}, partition {}, offset {}, eventA={}, eventB={}, score={}, timestamp={}",
-                    metadata.topic(),
-                    metadata.partition(),
-                    metadata.offset(),
-                    similarity.getEventA(),
-                    similarity.getEventB(),
-                    similarity.getScore(),
-                    similarity.getTimestamp());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new KafkaException("Отправка сходства мероприятий в Kafka была прервана", e);
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    log.error("Ошибка отправки сходства мероприятий в Kafka. eventA={}, eventB={}, score={}, timestamp={}",
+                            similarity.getEventA(),
+                            similarity.getEventB(),
+                            similarity.getScore(),
+                            similarity.getTimestamp(),
+                            exception);
+                } else {
+                    log.info("Event similarity sent to topic {}, partition {}, offset {}, eventA={}, eventB={}, score={}, timestamp={}",
+                            metadata.topic(),
+                            metadata.partition(),
+                            metadata.offset(),
+                            similarity.getEventA(),
+                            similarity.getEventB(),
+                            similarity.getScore(),
+                            similarity.getTimestamp());
+                }
+            });
         } catch (Exception e) {
             throw new KafkaException("Ошибка отправки сходства мероприятий в Kafka", e);
         }
