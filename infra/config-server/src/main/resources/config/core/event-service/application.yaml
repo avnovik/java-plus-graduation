@@ -6,6 +6,9 @@ grpc:
     analyzer:
       address: discovery:///analyzer
       negotiation-type: plaintext
+    collector:
+      address: discovery:///collector
+      negotiation-type: plaintext
 
 spring:
   jpa:
