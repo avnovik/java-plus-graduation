@@ -41,7 +41,7 @@ public class UserActionConsumerRunner implements ApplicationRunner {
                 }
                 records.forEach(record -> {
                     UserActionAvro action = record.value();
-                    log.debug(
+                    log.info(
                             "Received user action. topic={}, partition={}, offset={}, eventId={}, userId={}, actionType={}",
                             record.topic(),
                             record.partition(),
@@ -51,13 +51,19 @@ public class UserActionConsumerRunner implements ApplicationRunner {
                             action.getActionType()
                     );
                     List<EventSimilarityAvro> similarities = similarityService.updateSimilarities(action);
-                    log.debug("Calculated {} event similarities for eventId={}, userId={}, actionType={}",
+                    log.info("Calculated similarities batch. userId={}, eventId={}, actionType={}, actionTimestamp={}, similaritiesCount={}",
+                            action.getUserId(),
+                            action.getEventId(),
+                            action.getActionType(),
+                            action.getTimestamp(),
+                            similarities.size());
+                    log.info("Calculated {} event similarities for eventId={}, userId={}, actionType={}",
                             similarities.size(),
                             action.getEventId(),
                             action.getUserId(),
                             action.getActionType());
                     similarities.forEach(similarity -> {
-                        log.debug("Sending event similarity eventA={}, eventB={}, score={}, timestamp={}",
+                        log.info("Sending event similarity eventA={}, eventB={}, score={}, timestamp={}",
                                 similarity.getEventA(),
                                 similarity.getEventB(),
                                 similarity.getScore(),
@@ -65,6 +71,12 @@ public class UserActionConsumerRunner implements ApplicationRunner {
                         eventSimilaritySender.send(similarity);
                     });
                     eventSimilaritySender.flush();
+                    log.info("Flushed similarities batch. userId={}, eventId={}, actionType={}, actionTimestamp={}, similaritiesCount={}",
+                            action.getUserId(),
+                            action.getEventId(),
+                            action.getActionType(),
+                            action.getTimestamp(),
+                            similarities.size());
                 });
             } catch (Exception e) {
                 log.error("Ошибка обработки действий пользователей в Aggregator", e);
