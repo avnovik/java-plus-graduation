@@ -34,7 +34,7 @@ public class CompilationMapper {
                 .map(event -> {
                     EventStatsDto stats = statsDtoMap.getOrDefault(
                             event.getId(),
-                            new EventStatsDto(0L, 0L)
+                            new EventStatsDto(0L, 0.0)
                     );
                     return EventMapper.toEventShortDto(
                             event,

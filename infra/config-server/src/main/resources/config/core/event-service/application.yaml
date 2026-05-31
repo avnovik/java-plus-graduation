@@ -1,6 +1,12 @@
 server:
   port: 0
 
+grpc:
+  client:
+    analyzer:
+      address: discovery:///analyzer
+      negotiation-type: plaintext
+
 spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
