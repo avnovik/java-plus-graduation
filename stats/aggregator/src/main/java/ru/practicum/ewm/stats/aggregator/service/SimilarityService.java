@@ -1,5 +1,7 @@
 package ru.practicum.ewm.stats.aggregator.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +51,7 @@ public class SimilarityService {
             if (minWeightDelta > 0.0) {
                 minWeightsSum = addMinWeightsSum(eventId, otherEventId, minWeightDelta);
             }
-            double similarity = minWeightsSum / Math.sqrt(eventWeightSums.get(eventId) * eventWeightSums.get(otherEventId));
+            double similarity = roundScore(minWeightsSum / Math.sqrt(eventWeightSums.get(eventId) * eventWeightSums.get(otherEventId)));
             long eventA = Math.min(eventId, otherEventId);
             long eventB = Math.max(eventId, otherEventId);
             similarities.add(new EventSimilarityAvro(eventA, eventB, similarity, Instant.now()));
@@ -64,6 +66,12 @@ public class SimilarityService {
             case REGISTER -> 0.8;
             case LIKE -> 1.0;
         };
+    }
+
+    private double roundScore(double score) {
+        return BigDecimal.valueOf(score)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 
     private double getEventUserWeight(long eventId, long userId) {
