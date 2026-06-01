@@ -22,4 +22,8 @@ public class InternalRequestService {
                 .map(r -> new EventConfirmedCountDto(r.getEventId(), r.getCnt()))
                 .toList();
     }
+
+    public boolean hasConfirmedRequest(Long userId, Long eventId) {
+        return requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, eventId, RequestStatus.CONFIRMED);
+    }
 }

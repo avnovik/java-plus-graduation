@@ -6,11 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClientException;
 
-import ru.practicum.StatsClient;
-import ru.practicum.dto.StatsParamDto;
-import ru.practicum.dto.ViewStatsDto;
+import ru.practicum.AnalyzerClient;
+import ru.practicum.CollectorClient;
 import ru.practicum.explorewithme.category.client.CategoryClient;
 import ru.practicum.explorewithme.category.dto.CategoryDto;
 import ru.practicum.explorewithme.common.paging.OffsetBasedPageRequest;
@@ -47,7 +45,8 @@ public class EventServiceImpl implements EventService {
     private final UserClient userClient;
     private final CategoryClient categoryClient;
     private final RequestClient requestClient;
-    private final StatsClient statsClient;
+    private final AnalyzerClient analyzerClient;
+    private final CollectorClient collectorClient;
 
     @Override
     @Transactional
@@ -122,8 +121,8 @@ public class EventServiceImpl implements EventService {
         }
         boolean sortByEventDate = sort == null || sort == PublicEventSort.EVENT_DATE;
 
-        Integer repoFrom = sort == PublicEventSort.VIEWS ? null : from;
-        Integer repoSize = sort == PublicEventSort.VIEWS ? null : size;
+        Integer repoFrom = sort == PublicEventSort.RATING ? null : from;
+        Integer repoSize = sort == PublicEventSort.RATING ? null : size;
 
         List<Event> events = eventRepository.findPublicEvents(
                 text,
@@ -148,8 +147,8 @@ public class EventServiceImpl implements EventService {
         Map<Long, EventStatsDto> stats = loadEventStats(events);
         List<EventShortDto> result = EventMapper.toEventShortDto(events, stats, this::loadCategory, this::loadInitiator);
 
-        if (sort == PublicEventSort.VIEWS) {
-            result.sort(Comparator.comparing(EventShortDto::getViews, Comparator.nullsFirst(Long::compareTo)).reversed());
+        if (sort == PublicEventSort.RATING) {
+            result.sort(Comparator.comparing(EventShortDto::getRating, Comparator.nullsFirst(Double::compareTo)).reversed());
 
             int start = Math.min(from, result.size());
             int end = Math.min(from + size, result.size());
@@ -170,6 +169,49 @@ public class EventServiceImpl implements EventService {
 
         EventStatsDto stats = loadEventStats(event);
         return EventMapper.toEventFullDto(event, loadCategory(event.getCategoryId()), loadInitiator(event.getInitiatorId()), stats);
+    }
+
+    @Override
+    public List<EventShortDto> getRecommendations(Long userId, int maxResults) {
+        userClient.getUser(userId);
+
+        List<Long> eventIds = analyzerClient.getRecommendationsForUser(userId, maxResults)
+                .map(rec -> rec.getEventId())
+                .toList();
+
+        if (eventIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Event> eventsById = eventRepository.findAllById(eventIds).stream()
+                .filter(event -> event.getState() == EventState.PUBLISHED)
+                .collect(Collectors.toMap(Event::getId, event -> event));
+
+        List<Event> events = eventIds.stream()
+                .map(eventsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<Long, EventStatsDto> stats = loadEventStats(events);
+        return EventMapper.toEventShortDto(events, stats, this::loadCategory, this::loadInitiator);
+    }
+
+    @Override
+    public void likeEvent(Long userId, Long eventId) {
+        userClient.getUser(userId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> eventNotFound(eventId));
+
+        if (event.getState() != EventState.PUBLISHED) {
+            throw eventNotFound(eventId);
+        }
+
+        Boolean visited = requestClient.hasConfirmedRequest(userId, eventId);
+        if (!Boolean.TRUE.equals(visited)) {
+            throw new ValidationException("Only confirmed participants can like events");
+        }
+
+        collectorClient.collectLike(userId, eventId);
     }
 
     @Override
@@ -242,25 +284,25 @@ public class EventServiceImpl implements EventService {
                 .map(Event::getId)
                 .toList();
         Map<Long, Long> confirmedByEventId = getConfirmedRequestsByEventIds(eventIds);
-        Map<Long, Long> viewsByEventId = getViewsByEventIds(eventIds);
+        Map<Long, Double> ratingByEventId = getRatingsByEventIds(eventIds);
 
         return eventIds.stream()
                 .collect(Collectors.toMap(
                         id -> id,
                         id -> new EventStatsDto(
                                 confirmedByEventId.getOrDefault(id, 0L),
-                                viewsByEventId.getOrDefault(id, 0L)
+                                ratingByEventId.getOrDefault(id, 0.0)
                         )
                 ));
     }
 
     private EventStatsDto loadEventStats(Event event) {
         if (event == null) {
-            return new EventStatsDto(0L, 0L);
+            return new EventStatsDto(0L, 0.0);
         }
 
         return loadEventStats(List.of(event))
-                .getOrDefault(event.getId(), new EventStatsDto(0L, 0L));
+                .getOrDefault(event.getId(), new EventStatsDto(0L, 0.0));
     }
 
     private Map<Long, Long> getConfirmedRequestsByEventIds(List<Long> eventIds) {
@@ -303,53 +345,20 @@ public class EventServiceImpl implements EventService {
                 .toList();
     }
 
-    private Map<Long, Long> getViewsByEventIds(List<Long> eventIds) {
+    private Map<Long, Double> getRatingsByEventIds(List<Long> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        List<String> uris = eventIds.stream()
-                .map(id -> "/events/" + id)
-                .collect(Collectors.toList());
-
-        StatsParamDto params = new StatsParamDto(STATS_START, LocalDateTime.now(), uris, true);
-
-        List<ViewStatsDto> stats;
         try {
-            stats = statsClient.getStats(params);
-            log.debug("Stats response: size={}", stats == null ? 0 : stats.size());
-        } catch (RestClientException ex) {
-            log.warn("Stats request failed; returning views=0. Message: {}", ex.getMessage());
+            return analyzerClient.getInteractionsCount(eventIds)
+                    .collect(Collectors.toMap(
+                            rec -> rec.getEventId(),
+                            rec -> rec.getScore()
+                    ));
+        } catch (Exception ex) {
+            log.warn("Analyzer request failed; returning rating=0. Message: {}", ex.getMessage());
             return Collections.emptyMap();
-        }
-        if (stats == null || stats.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<Long, Long> result = new HashMap<>();
-        for (ViewStatsDto row : stats) {
-            if (row == null || row.getUri() == null || row.getHits() == null) {
-                continue;
-            }
-            Long eventId = extractEventId(row.getUri());
-            if (eventId == null) {
-                continue;
-            }
-            result.merge(eventId, row.getHits(), Long::sum);
-        }
-        return result;
-    }
-
-    private Long extractEventId(String uri) {
-        int lastSlash = uri.lastIndexOf('/');
-        if (lastSlash < 0 || lastSlash == uri.length() - 1) {
-            return null;
-        }
-        String idPart = uri.substring(lastSlash + 1);
-        try {
-            return Long.parseLong(idPart);
-        } catch (NumberFormatException e) {
-            return null;
         }
     }
 

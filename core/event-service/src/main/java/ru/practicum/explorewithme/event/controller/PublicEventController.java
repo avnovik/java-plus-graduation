@@ -1,16 +1,13 @@
 package ru.practicum.explorewithme.event.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.StatsClient;
-import ru.practicum.dto.EndPointHitDto;
+import ru.practicum.CollectorClient;
 import ru.practicum.explorewithme.event.dto.EventFullDto;
 import ru.practicum.explorewithme.event.dto.EventShortDto;
 import ru.practicum.explorewithme.event.dto.PublicEventSort;
@@ -25,11 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicEventController {
 
-    @Value("${spring.application.name}")
-    private String appName;
-
     private final EventService eventService;
-    private final StatsClient statsClient;
+    private final CollectorClient collectorClient;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -42,10 +36,8 @@ public class PublicEventController {
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false) PublicEventSort sort,
             @RequestParam(defaultValue = "0") @Min(0) int from,
-            @RequestParam(defaultValue = "10") @Positive int size,
-            HttpServletRequest request
+            @RequestParam(defaultValue = "10") @Positive int size
     ) {
-        saveHit(request);
         log.debug("GET /events: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
@@ -53,27 +45,31 @@ public class PublicEventController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public EventFullDto getEventById(@PathVariable Long id, HttpServletRequest request) {
-        saveHit(request);
-        log.debug("GET /events/{}", id);
-        return eventService.getPublicEventById(id);
+    public EventFullDto getEventById(@PathVariable Long id,
+                                     @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.debug("GET /events/{} by userId={}", id, userId);
+        EventFullDto event = eventService.getPublicEventById(id);
+        try {
+            collectorClient.collectView(userId, id);
+        } catch (Exception ex) {
+            log.warn("Failed to send VIEW action for userId={}, eventId={}: {}", userId, id, ex.getMessage());
+        }
+        return event;
     }
 
-    private void saveHit(HttpServletRequest request) {
-        if (request == null) {
-            return;
-        }
-        EndPointHitDto hit = new EndPointHitDto(
-                null,
-                appName,
-                request.getRequestURI(),
-                request.getRemoteAddr(),
-                LocalDateTime.now()
-        );
-        try {
-            statsClient.saveHit(hit);
-        } catch (Exception ex) {
-            log.warn("Failed to save stats hit: {}", ex.getMessage());
-        }
+    @GetMapping("/recommendations")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> getRecommendations(@RequestHeader("X-EWM-USER-ID") long userId,
+                                                  @RequestParam(defaultValue = "10") @Positive int maxResults) {
+        log.debug("GET /events/recommendations by userId={}, maxResults={}", userId, maxResults);
+        return eventService.getRecommendations(userId, maxResults);
+    }
+
+    @PutMapping("/{eventId}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeEvent(@PathVariable Long eventId,
+                          @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.debug("PUT /events/{}/like by userId={}", eventId, userId);
+        eventService.likeEvent(userId, eventId);
     }
 }
