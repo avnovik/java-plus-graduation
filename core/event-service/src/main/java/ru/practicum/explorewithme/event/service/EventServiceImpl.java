@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import ru.practicum.AnalyzerClient;
+import ru.practicum.CollectorClient;
 import ru.practicum.explorewithme.category.client.CategoryClient;
 import ru.practicum.explorewithme.category.dto.CategoryDto;
 import ru.practicum.explorewithme.common.paging.OffsetBasedPageRequest;
@@ -45,6 +46,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryClient categoryClient;
     private final RequestClient requestClient;
     private final AnalyzerClient analyzerClient;
+    private final CollectorClient collectorClient;
 
     @Override
     @Transactional
@@ -167,6 +169,49 @@ public class EventServiceImpl implements EventService {
 
         EventStatsDto stats = loadEventStats(event);
         return EventMapper.toEventFullDto(event, loadCategory(event.getCategoryId()), loadInitiator(event.getInitiatorId()), stats);
+    }
+
+    @Override
+    public List<EventShortDto> getRecommendations(Long userId, int maxResults) {
+        userClient.getUser(userId);
+
+        List<Long> eventIds = analyzerClient.getRecommendationsForUser(userId, maxResults)
+                .map(rec -> rec.getEventId())
+                .toList();
+
+        if (eventIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Event> eventsById = eventRepository.findAllById(eventIds).stream()
+                .filter(event -> event.getState() == EventState.PUBLISHED)
+                .collect(Collectors.toMap(Event::getId, event -> event));
+
+        List<Event> events = eventIds.stream()
+                .map(eventsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<Long, EventStatsDto> stats = loadEventStats(events);
+        return EventMapper.toEventShortDto(events, stats, this::loadCategory, this::loadInitiator);
+    }
+
+    @Override
+    public void likeEvent(Long userId, Long eventId) {
+        userClient.getUser(userId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> eventNotFound(eventId));
+
+        if (event.getState() != EventState.PUBLISHED) {
+            throw eventNotFound(eventId);
+        }
+
+        Boolean visited = requestClient.hasConfirmedRequest(userId, eventId);
+        if (!Boolean.TRUE.equals(visited)) {
+            throw new ValidationException("Only confirmed participants can like events");
+        }
+
+        collectorClient.collectLike(userId, eventId);
     }
 
     @Override

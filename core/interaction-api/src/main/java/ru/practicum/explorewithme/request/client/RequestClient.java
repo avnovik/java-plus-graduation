@@ -12,4 +12,8 @@ public interface RequestClient {
 
     @GetMapping("/confirmed-count")
     List<EventConfirmedCountDto> getConfirmedCounts(@RequestParam("eventIds") List<Long> eventIds);
+
+    @GetMapping("/confirmed")
+    Boolean hasConfirmedRequest(@RequestParam("userId") Long userId,
+                                @RequestParam("eventId") Long eventId);
 }

@@ -56,4 +56,20 @@ public class PublicEventController {
         }
         return event;
     }
+
+    @GetMapping("/recommendations")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> getRecommendations(@RequestHeader("X-EWM-USER-ID") long userId,
+                                                  @RequestParam(defaultValue = "10") @Positive int maxResults) {
+        log.debug("GET /events/recommendations by userId={}, maxResults={}", userId, maxResults);
+        return eventService.getRecommendations(userId, maxResults);
+    }
+
+    @PutMapping("/{eventId}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeEvent(@PathVariable Long eventId,
+                          @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.debug("PUT /events/{}/like by userId={}", eventId, userId);
+        eventService.likeEvent(userId, eventId);
+    }
 }

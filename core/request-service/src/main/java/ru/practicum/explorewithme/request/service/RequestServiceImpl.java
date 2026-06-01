@@ -1,9 +1,11 @@
 package ru.practicum.explorewithme.request.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.CollectorClient;
 import ru.practicum.explorewithme.dto.error.ConflictException;
 import ru.practicum.explorewithme.dto.error.NotFoundException;
 import ru.practicum.explorewithme.event.client.EventClient;
@@ -23,11 +25,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
+    private final CollectorClient collectorClient;
 
     @Override
     public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
@@ -84,7 +88,13 @@ public class RequestServiceImpl implements RequestService {
         }
 
         try {
-            return RequestMapper.toDto(requestRepository.save(request));
+            Request saved = requestRepository.save(request);
+            try {
+                collectorClient.collectRegister(userId, eventId);
+            } catch (Exception ex) {
+                log.warn("Failed to send REGISTER action for userId={}, eventId={}: {}", userId, eventId, ex.getMessage());
+            }
+            return RequestMapper.toDto(saved);
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException("Заявка уже существует");
         }
