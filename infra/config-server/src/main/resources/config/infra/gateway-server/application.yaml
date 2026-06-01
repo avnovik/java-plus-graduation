@@ -45,6 +45,9 @@ logging:
     org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG
 
 management:
+  endpoint:
+    gateway:
+      enabled: true
   endpoints:
     web:
       exposure:
