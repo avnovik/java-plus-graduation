@@ -3,7 +3,7 @@
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-Gateway%20%7C%20Config%20%7C%20Eureka-blue)
-![Kafka](https://img.shields.io/badge/Apache%20Kafka-7.4-black)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-7.x-brightgreen)
 ![gRPC](https://img.shields.io/badge/gRPC-Protobuf-blueviolet)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![Maven](https://img.shields.io/badge/Maven-build-red)
@@ -69,7 +69,7 @@
 
 ```mermaid
 flowchart LR
-    Client[Client / Tester] --> Gateway[Gateway Server :8080]
+    Client --> Gateway[Gateway Server :8080]
 
     Gateway --> User[user-service]
     Gateway --> Event[event-service]
