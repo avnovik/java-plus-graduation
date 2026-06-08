@@ -58,7 +58,7 @@ public class EventMapper {
                 .initiator(initiator)
                 .location(toLocationDto(event.getLat(), event.getLon()))
                 .confirmedRequests(statsDto.getConfirmedRequests())
-                .views(statsDto.getViews())
+                .rating(statsDto.getRating())
                 .build();
     }
 
@@ -71,7 +71,7 @@ public class EventMapper {
                         event,
                         categoryLoader.apply(event.getCategoryId()),
                         initiatorLoader.apply(event.getInitiatorId()),
-                        statsDto.getOrDefault(event.getId(), new EventStatsDto(0L, 0L))
+                        statsDto.getOrDefault(event.getId(), new EventStatsDto(0L, 0.0))
                 ))
                 .toList();
     }
@@ -96,7 +96,7 @@ public class EventMapper {
                 initiator,
                 event.isPaid(),
                 event.getTitle(),
-                statsDto.getViews()
+                statsDto.getRating()
         );
     }
 
@@ -107,7 +107,7 @@ public class EventMapper {
         return events.stream()
                 .map(event -> toEventShortDto(
                         event,
-                        statsDto.getOrDefault(event.getId(), new EventStatsDto(0L, 0L)),
+                        statsDto.getOrDefault(event.getId(), new EventStatsDto(0L, 0.0)),
                         categoryLoader.apply(event.getCategoryId()),
                         initiatorLoader.apply(event.getInitiatorId())
                 ))

@@ -8,9 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.StatsClient;
-import ru.practicum.dto.StatsParamDto;
-import ru.practicum.dto.ViewStatsDto;
+import ru.practicum.AnalyzerClient;
 import ru.practicum.explorewithme.category.client.CategoryClient;
 import ru.practicum.explorewithme.category.dto.CategoryDto;
 import ru.practicum.explorewithme.compilations.dto.CompilationDto;
@@ -41,7 +39,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CompilationServiceImpl implements CompilationService {
-    private final StatsClient statsClient;
+    private final AnalyzerClient analyzerClient;
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
     private final RequestClient requestClient;
@@ -160,15 +158,14 @@ public class CompilationServiceImpl implements CompilationService {
                 .distinct()
                 .toList();
         Map<Long, Long> confirmedRequests = buildConfirmedRequests(eventIds);
-        // key - id Event, val - view
-        Map<Long, Long> views = buildView(eventIds);
+        Map<Long, Double> rating = buildRating(eventIds);
 
         return eventIds.stream()
                 .collect(Collectors.toMap(
                         id -> id,
                         id -> new EventStatsDto(
                                 confirmedRequests.getOrDefault(id, 0L),
-                                views.getOrDefault(id, 0L)
+                                rating.getOrDefault(id, 0.0)
                         )
                 ));
     }
@@ -197,41 +194,17 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
 
-    private Map<Long, Long> buildView(List<Long> eventIds) {
-        List<String> uris = eventIds.stream()
-                .map(id -> "/events/" + id)
-                .toList();
-
-        StatsParamDto statsParamDto = new StatsParamDto(LocalDateTime.now().minusYears(1),
-                LocalDateTime.now(),
-                uris,
-                true);
-
-        List<ViewStatsDto> stats = Optional.ofNullable(
-                statsClient.getStats(statsParamDto)
-        ).orElse(Collections.emptyList());
-
-        return stats.stream()
-                .map(stat -> {
-                    String uri = stat.getUri();
-                    if (uri == null) return null;
-
-                    int idx = uri.lastIndexOf("/");
-                    if (idx == -1 || idx == uri.length() - 1) return null;
-
-                    try {
-                        Long eventId = Long.parseLong(uri.substring(idx + 1));
-                        return Map.entry(eventId, stat.getHits());
-                    } catch (NumberFormatException e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        Long::sum
-                ));
+    private Map<Long, Double> buildRating(List<Long> eventIds) {
+        try {
+            return analyzerClient.getInteractionsCount(eventIds)
+                    .collect(Collectors.toMap(
+                            rec -> rec.getEventId(),
+                            rec -> rec.getScore()
+                    ));
+        } catch (Exception ex) {
+            log.warn("Analyzer request failed; returning rating=0. Message: {}", ex.getMessage());
+            return Collections.emptyMap();
+        }
     }
 
 

@@ -22,6 +22,10 @@ public interface EventService {
 
     EventFullDto getPublicEventById(Long eventId);
 
+    List<EventShortDto> getRecommendations(Long userId, int maxResults);
+
+    void likeEvent(Long userId, Long eventId);
+
     List<EventFullDto> findAllEventsToAdmin(EventAdminSettingSearchDto settingSearchDto);
 
     EventFullDto updateEventByIdToAdmin(Long eventId, UpdateEventAdminRequest adminRequest);

@@ -21,4 +21,10 @@ public class InternalRequestController {
     public List<EventConfirmedCountDto> getConfirmedCounts(@RequestParam List<Long> eventIds) {
         return internalRequestService.getConfirmedCounts(eventIds);
     }
+
+    @GetMapping("/confirmed")
+    public boolean hasConfirmedRequest(@RequestParam Long userId,
+                                       @RequestParam Long eventId) {
+        return internalRequestService.hasConfirmedRequest(userId, eventId);
+    }
 }

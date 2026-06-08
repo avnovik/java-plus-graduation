@@ -1,6 +1,15 @@
 server:
   port: 0
 
+grpc:
+  client:
+    analyzer:
+      address: discovery:///analyzer
+      negotiation-type: plaintext
+    collector:
+      address: discovery:///collector
+      negotiation-type: plaintext
+
 spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect

@@ -30,5 +30,5 @@ public class EventShortDto {
     private Boolean paid;
     @NotBlank
     private String title;
-    private Long views;
+    private Double rating;
 }
